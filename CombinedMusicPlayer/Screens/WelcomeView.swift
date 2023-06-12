@@ -8,7 +8,7 @@
 import MusicKit
 import Foundation
 import SwiftUI
-
+ 
 // MARK: - Welcome view
 
 /// The welcome view.
@@ -42,7 +42,7 @@ struct WelcomeView: View {
 						.font(.largeTitle.weight(.semibold))
 						.shadow(radius: 2)
 						.padding(.bottom, 1)
-				Text("Utilise multiple streaming services.")
+				Text("Use multiple streaming services.")
 						.foregroundColor(.primary)
 						.font(.title2.weight(.medium))
 						.multilineTextAlignment(.center)
@@ -72,7 +72,7 @@ struct WelcomeView: View {
 						buttonText
 								.padding([.leading, .trailing], 10)
 					}
-                            .buttonStyle(.borderedProminent)
+                            .buttonStyle(.prominent)
 							.colorScheme(.light)
 				}
 			}

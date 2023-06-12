@@ -6,18 +6,27 @@ import Foundation
 import SwiftUI
 import MusicKit
 
+// MARK: - Song Item Structure
 struct SongItem: Identifiable, Hashable {
     let id = UUID()
     let name: String
     let artist: String
     let album: String
     let imageURL: URL?
+    let streamURL: URL?
 }
 
+// MARK: - Search View
 struct SearchView: View {
+
+    // MARK: - Properties
+    @State private var searchText = String()
+    @State private var isSearching = false
     @State var songs = [SongItem]()
 
+    // MARK: - View
     var body: some View {
+        SearchBar(text: $searchText, isSearching: $isSearching)
         NavigationView {
             List(songs) { song in
                 HStack {
@@ -41,68 +50,88 @@ struct SearchView: View {
                 }
             }
                     .navigationTitle("Search")
-                    .onAppear {
-                        search()
+                    .onChange(of: searchText) { searchText in
+                        search(for: searchText)
                     }
         }
     }
 
     private let requests: MusicCatalogSearchRequest = {
-        var request = MusicCatalogSearchRequest(term: "Taylor Swift", types: [Song.self])
+        // This search request should take the term the user entered in the search bar, and return the first 10 songs that match that term.
+        var request = MusicCatalogSearchRequest(term: "First Step", types: [Song.self])
 
         request.limit = 10
         return request
     }()
 
-    private func search() {
+    // MARK: - Methods
+    private func search(for searchText: String) {
         // Request -> Response
         Task {
-            do {
-                let result = try await requests.response()
-                self.songs = result.songs.compactMap({
-                    .init(
-                        name: $0.title,
-                        artist: $0.artistName,
-                        album: $0.albumTitle ?? "",
-                        imageURL: $0.artwork?.url(width: 100, height: 100)
-                    )
-                })
-                print(String(describing: songs[0]))
-            } catch {
-                print(String(describing: error))
+            if searchText.isEmpty {
+                songs = []
+                return
+            } else {
+                do {
+                    let result = try await MusicCatalogSearchRequest(term: searchText, types: [Song.self]).response()
+                    self.songs = result.songs.compactMap({
+                        .init(
+                            name: $0.title,
+                            artist: $0.artistName,
+                            album: $0.albumTitle ?? "",
+                            imageURL: $0.artwork?.url(width: 75, height: 75),
+                            streamURL: $0.url
+                        )
+                    })
+                    print(String(describing: songs[0]))
+                    return
+                } catch {
+                    print(String(describing: error))
+                    songs = []
+                    return
+                }
             }
         }
     }
 }
 
+
+// MARK: - Search Bar
 struct SearchBar: View {
+
+    // MARK: - Properties
     @Binding var text: String
     @Binding var isSearching: Bool
-    var onSearch: () -> Void
 
+    // MARK: - View
     var body: some View {
         HStack {
-            TextField("Search", text: $text, onCommit: {
-                onSearch()
-            })
+            TextField("Search for a song...", text: $text)
                     .padding(.leading, 24)
-
-            if isSearching {
-                Button(action: {
-                    text = ""
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                            .padding(.trailing, 8)
-                }
-            }
         }
-                .padding(8)
+                .padding()
                 .background(Color(.systemGray5))
-                .cornerRadius(10)
+                .cornerRadius(6)
                 .padding(.horizontal)
                 .onTapGesture {
                     isSearching = true
                 }
+                .overlay(
+                        HStack {
+                            Image(systemName: "magnifyingglass")
+                            Spacer()
+                            if isSearching {
+                                Button(action: {
+                                    text = ""
+                                }, label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                            .padding(.vertical)
+                                })
+                            }
+                        }
+                                .padding(.horizontal, 32)
+                                .foregroundColor(.gray)
+                )
     }
 }
 

@@ -73,7 +73,9 @@ struct SearchView: View {
                 return
             } else {
                 do {
-                    let result = try await MusicCatalogSearchRequest(term: searchText, types: [Song.self]).response()
+                    var request = MusicCatalogSearchRequest(term: searchText, types: [Song.self])
+                    request.limit = 15
+                    let result = try await request.response()
                     self.songs = result.songs.compactMap({
                         .init(
                             name: $0.title,

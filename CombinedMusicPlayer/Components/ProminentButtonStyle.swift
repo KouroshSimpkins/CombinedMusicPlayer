@@ -5,6 +5,7 @@
 import Foundation
 import SwiftUI
 
+// MARK: - The Prominent Button Style
 struct ProminentButtonStyle: ButtonStyle {
 
 	@Environment(\.colorScheme) private var colorScheme: ColorScheme

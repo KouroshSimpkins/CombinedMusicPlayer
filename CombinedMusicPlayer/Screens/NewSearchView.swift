@@ -9,6 +9,7 @@ import MusicKit
 // MARK: - Song Item Structure
 struct SongItem: Identifiable, Hashable {
     let id = UUID()
+    let StringID: String // The ID of the song in the Apple Music catalog.
     let name: String
     let artist: String
     let album: String
@@ -23,30 +24,15 @@ struct SearchView: View {
     @State private var searchText = String()
     @State private var isSearching = false
     @State var songs = [SongItem]()
+    @StateObject var playerManager = PlayerManager()
 
     // MARK: - View
     var body: some View {
         SearchBar(text: $searchText, isSearching: $isSearching)
         NavigationView {
             List(songs) { song in
-                HStack {
-                    AsyncImage(url: song.imageURL) { image in
-                        image.resizable()
-                    } placeholder: {
-                        Image(systemName: "music.note")
-                                .resizable()
-                    }
-                            .frame(width: 50, height: 50)
-                            .cornerRadius(5)
-                    VStack(alignment: .leading) {
-                        Text(song.name)
-                                .font(.headline)
-                        Text(song.artist)
-                                .font(.subheadline)
-                        Text(song.album)
-                                .font(.subheadline)
-                    }
-
+                NavigationLink(destination: PlayerView(playerManager: playerManager, songID: song.StringID)) {
+                    SongRow(songItem: song)
                 }
             }
                     .navigationTitle("Search")
@@ -78,6 +64,7 @@ struct SearchView: View {
                     let result = try await request.response()
                     self.songs = result.songs.compactMap({
                         .init(
+                            StringID: $0.id.rawValue,
                             name: $0.title,
                             artist: $0.artistName,
                             album: $0.albumTitle ?? "",
@@ -85,7 +72,12 @@ struct SearchView: View {
                             streamURL: $0.url
                         )
                     })
-                    print(String(describing: songs[0]))
+
+                    // Each song in the search result should be displayed using the SongRow view.
+                    // The SongRow view should display the song's artwork, title, artist, and album.
+                    // When the user taps on a song, the song should be sent to the playerView.
+                    // The playerView should then play the song.
+
                     return
                 } catch {
                     print(String(describing: error))
@@ -93,6 +85,15 @@ struct SearchView: View {
                     return
                 }
             }
+        }
+    }
+
+    // When the user taps on a song we want to make sure the song data is passed to the playerView
+    // We can do this by passing the song data to the playerView using the NavigationLink
+
+    // MARK: - Navigation
+    private func navigationLink(for song: SongItem) -> some View {
+        NavigationLink(destination: PlayerView(playerManager: playerManager, songID: song.StringID)) {
         }
     }
 }
